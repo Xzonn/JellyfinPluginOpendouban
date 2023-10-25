@@ -179,10 +179,12 @@ namespace Jellyfin.Plugin.OpenDouban
         public string Name { get; set; }
         public string Img { get; set; }
         public string Role { get; set; }
+        public string Rolename { get; set; }
         public string Intro { get; set; }
         public string Gender { get; set; }
         public string Constellation { get; set; }
         public string Birthdate { get; set; }
+        public string Deathdate { get; set; }
         public string Birthplace { get; set; }
         public string Nickname { get; set; }
         public string Imdb { get; set; }

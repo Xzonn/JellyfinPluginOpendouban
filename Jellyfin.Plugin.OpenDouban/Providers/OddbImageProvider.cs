@@ -54,13 +54,13 @@ namespace Jellyfin.Plugin.OpenDouban.Providers
         /// <inheritdoc />
         public async Task<IEnumerable<RemoteImageInfo>> GetImages(BaseItem item, CancellationToken cancellationToken)
         {
-            _logger.LogInformation($"[DOUBAN] GetImages for item: {item.Name}");
+            _logger.LogInformation($"[OpenDouban] GetImages for item: {item.Name}");
 
             string sid = item.GetProviderId(OddbPlugin.ProviderId);
 
             if (string.IsNullOrEmpty(sid))
             {
-                _logger.LogWarning($"[DOUBAN] Got images failed because the sid of \"{item.Name}\" is empty!");
+                _logger.LogWarning($"[OpenDouban] Got images failed because the sid of \"{item.Name}\" is empty!");
                 return new List<RemoteImageInfo>();
             }
 
@@ -71,7 +71,8 @@ namespace Jellyfin.Plugin.OpenDouban.Providers
             var res = new List<RemoteImageInfo> {
                 new RemoteImageInfo
                 {
-                    ProviderName = primary.Name,
+                    Language = "zh",
+                    ProviderName = "Douban",
                     Url = primary.Img,
                     Type = ImageType.Primary
                 }
@@ -83,7 +84,7 @@ namespace Jellyfin.Plugin.OpenDouban.Providers
         /// <inheritdoc />
         public async Task<HttpResponseMessage> GetImageResponse(string url, CancellationToken cancellationToken)
         {
-            _logger.LogInformation("[DOUBAN] GetImageResponse url: {0}", url);
+            _logger.LogInformation("[OpenDouban] GetImageResponse url: {0}", url);
             HttpResponseMessage response = await _httpClientFactory.CreateClient().GetAsync(url, cancellationToken).ConfigureAwait(false);
             response.EnsureSuccessStatusCode();
             return response;
@@ -96,7 +97,7 @@ namespace Jellyfin.Plugin.OpenDouban.Providers
         /// <param name="cancellationToken">Instance of the <see cref="CancellationToken"/> interface.</param>
         public async Task<IEnumerable<RemoteImageInfo>> GetBackdrop(string sid, CancellationToken cancellationToken)
         {
-            _logger.LogInformation("[DOUBAN] GetBackdrop of sid: {0}", sid);
+            _logger.LogInformation("[OpenDouban] GetBackdrop of sid: {0}", sid);
             var photo = await _oddbApiClient.GetPhotoBySid(sid, cancellationToken);
             var list = new List<RemoteImageInfo>();
 
@@ -109,7 +110,8 @@ namespace Jellyfin.Plugin.OpenDouban.Providers
             {
                 return new RemoteImageInfo
                 {
-                    ProviderName = Name,
+                    Language = "zh",
+                    ProviderName = "Douban",
                     Url = x.Large,
                     Type = ImageType.Backdrop,
                 };

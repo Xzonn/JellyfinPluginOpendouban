@@ -65,20 +65,20 @@ namespace Jellyfin.Plugin.OpenDouban.Providers
             string sid = info.GetProviderId(OddbPlugin.ProviderId);
             if (!string.IsNullOrEmpty(sid))
             {
-                _logger.LogInformation($"[Open DOUBAN] Series GetSearchResults of [sid]: \"{sid}\"");
+                _logger.LogInformation($"[OpenDouban] Series GetSearchResults of [sid]: \"{sid}\"");
                 ApiSubject res = await _oddbApiClient.GetBySid(sid, cancellationToken);
                 list.Add(res);
             }
             else if (!string.IsNullOrEmpty(info.Name))
             {
-                _logger.LogInformation($"[Open DOUBAN] Series GetSearchResults of [name]: \"{info.Name}\"");
+                _logger.LogInformation($"[OpenDouban] Series GetSearchResults of [name]: \"{info.Name}\"");
                 List<ApiSubject> res = await _oddbApiClient.PartialSearch(info.Name, cancellationToken);
                 list.AddRange(res);
             }
 
             if (!list.Any())
             {
-                _logger.LogInformation($"[Open DOUBAN] Series GetSearchResults Found Nothing...");
+                _logger.LogInformation($"[OpenDouban] Series GetSearchResults Found Nothing...");
             }
 
             return list.Select(x =>
@@ -103,13 +103,13 @@ namespace Jellyfin.Plugin.OpenDouban.Providers
 
             if (!string.IsNullOrEmpty(sid))
             {
-                _logger.LogInformation($"[Open DOUBAN] Series GetMetadata of [sid]: \"{sid}\"");
+                _logger.LogInformation($"[OpenDouban] Series GetMetadata of [sid]: \"{sid}\"");
                 subject = await _oddbApiClient.GetBySid(sid, cancellationToken);
             }
             else if (!string.IsNullOrEmpty(info.Name))
             {
                 string name = Regex.Replace(info.Name, Pattern, " ");
-                _logger.LogInformation($"[Open DOUBAN] Series GetMetadata of [name]: \"{name}\"");
+                _logger.LogInformation($"[OpenDouban] Series GetMetadata of [name]: \"{name}\"");
 
                 List<ApiSubject> res = await _oddbApiClient.PartialSearch(name, cancellationToken);
 
@@ -135,9 +135,9 @@ namespace Jellyfin.Plugin.OpenDouban.Providers
                 CommunityRating = x?.Rating,
                 Overview = x?.Intro,
                 ProductionYear = x?.Year,
-                HomePageUrl = "https://www.douban.com",
+                HomePageUrl = x.Site,
                 Genres = x?.Genre.Split("/").Select(x => x.Trim()).ToArray(),
-                // ProductionLocations = [x?.Country],
+                ProductionLocations = x?.Country.Split("/").Select(x => x.Trim()).ToArray(),
                 PremiereDate = x?.ScreenTime,
             };
 
@@ -155,8 +155,17 @@ namespace Jellyfin.Plugin.OpenDouban.Providers
             x.Celebrities.ForEach(c => result.AddPerson(new MediaBrowser.Controller.Entities.PersonInfo
             {
                 Name = c.Name,
-                Type = c.Role.Equals("导演") ? PersonType.Director : PersonType.Actor,
-                Role = c.Role,
+                Type = c.Role switch
+                {
+                    "导演" => PersonType.Director,
+                    "演员" => PersonType.Actor,
+                    "配音" => PersonType.Actor,
+                    "编剧" => PersonType.Writer,
+                    "制片人" => PersonType.Producer,
+                    "作曲" => PersonType.Composer,
+                    _ => PersonType.Actor,
+                },
+                Role = c.Rolename,
                 ImageUrl = c.Img,
                 ProviderIds = new Dictionary<string, string> { { OddbPlugin.ProviderId, c.Id } },
             }));
@@ -167,7 +176,7 @@ namespace Jellyfin.Plugin.OpenDouban.Providers
         /// <inheritdoc />
         public async Task<HttpResponseMessage> GetImageResponse(string url, CancellationToken cancellationToken)
         {
-            _logger.LogInformation("[DOUBAN] GetImageResponse url: {0}", url);
+            _logger.LogInformation("[OpenDouban] GetImageResponse url: {0}", url);
             HttpResponseMessage response = await _httpClientFactory.CreateClient().GetAsync(url, cancellationToken).ConfigureAwait(false);
             response.EnsureSuccessStatusCode();
             return response;

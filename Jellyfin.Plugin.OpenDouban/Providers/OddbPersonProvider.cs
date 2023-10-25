@@ -48,7 +48,7 @@ namespace Jellyfin.Plugin.OpenDouban.Providers
             MetadataResult<Person> result = new MetadataResult<Person>();
 
             string cid = info.GetProviderId(OddbPlugin.ProviderId);
-            _logger.LogInformation($"[Open DOUBAN] Person GetMetadata of [cid]: \"{cid}\"");
+            _logger.LogInformation($"[OpenDouban] Person GetMetadata of [cid]: \"{cid}\"");
             ApiCelebrity c = await _oddbApiClient.GetCelebrityByCid(cid, cancellationToken);
 
             if (c != null)
@@ -58,7 +58,8 @@ namespace Jellyfin.Plugin.OpenDouban.Providers
                     Name = c.Name,
                     HomePageUrl = c.Site,
                     Overview = c.Intro,
-                    PremiereDate = DateTime.ParseExact(c.Birthdate, "yyyy年MM月dd日", System.Globalization.CultureInfo.CurrentCulture)
+                    PremiereDate = string.IsNullOrEmpty(c.Birthdate) ? null : DateTime.ParseExact(c.Birthdate, "yyyy年MM月dd日", System.Globalization.CultureInfo.CurrentCulture),
+                    EndDate = string.IsNullOrEmpty(c.Deathdate) ? null : DateTime.ParseExact(c.Deathdate, "yyyy年MM月dd日", System.Globalization.CultureInfo.CurrentCulture),
                 };
 
                 p.SetProviderId(OddbPlugin.ProviderId, c.Id);
@@ -83,7 +84,7 @@ namespace Jellyfin.Plugin.OpenDouban.Providers
         /// <inheritdoc />
         public async Task<HttpResponseMessage> GetImageResponse(string url, CancellationToken cancellationToken)
         {
-            _logger.LogInformation("[Open DOUBAN] Person GetImageResponse url: {0}", url);
+            _logger.LogInformation("[OpenDouban] Person GetImageResponse url: {0}", url);
             HttpResponseMessage response = await _httpClientFactory.CreateClient().GetAsync(url, cancellationToken).ConfigureAwait(false);
             response.EnsureSuccessStatusCode();
             return response;
